@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplikasi Kas Masjid Al-Falah</title>
-  <!-- Tailwind CSS CDN untuk tampilan modern -->
+  <title>Aplikasi Laporan Kas Masjid Al-Falah</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print {
       .no-print { display: none !important; }
-      body { background-color: #fff !important; padding: 0 !important; font-size: 11pt; }
-      .print-area { box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+      body { background-color: #fff !important; padding: 0 !important; font-size: 10.5pt; color: #000; }
+      .print-card { box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
       table { border-collapse: collapse !important; width: 100% !important; }
-      th, td { border: 1px solid #555 !important; }
+      th, td { border: 1px solid #4b5563 !important; }
       .bg-yellow-header { background-color: #fef08a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .bg-green-highlight { background-color: #86efac !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-break { page-break-inside: avoid; }
     }
     .bg-yellow-header { background-color: #fef08a; }
     .bg-green-highlight { background-color: #bbf7d0; }
@@ -22,49 +23,119 @@
 </head>
 <body class="bg-slate-100 text-gray-800 min-h-screen p-3 md:p-6 font-sans">
 
-  <div class="max-w-6xl mx-auto space-y-6">
+  <div class="max-w-6xl mx-auto space-y-5">
 
     <!-- ========================================== -->
-    <!-- 1. MENU INPUT DATA (DISEMBUNYIKAN SAAT CETAK) -->
+    <!-- 1. PENGATURAN PERIODE & SALDO AWAL (NO-PRINT) -->
     <!-- ========================================== -->
-    <div class="no-print bg-white rounded-xl shadow p-5 border border-slate-200">
-      <div class="flex items-center justify-between border-b pb-3 mb-4">
+    <div class="no-print bg-white rounded-xl shadow p-4 md:p-5 border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h2 class="text-sm md:text-base font-bold text-emerald-800 uppercase tracking-wide">
+          ⚙️️ 1. Pengaturan Periode & Saldo Awal Bulan
+        </h2>
+        <span class="text-xs text-gray-400">Data tersimpan otomatis</span>
+      </div>
+
+      <!-- Pilih Bulan & Tahun -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <div>
-          <h2 id="formTitle" class="text-lg font-bold text-emerald-800">📥 Menu Input Transaksi Kas</h2>
-          <p class="text-xs text-gray-500">Masukkan transaksi kas masuk atau kas keluar masjid.</p>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Bulan Laporan</label>
+          <select id="selBulan" onchange="updatePeriode()" class="w-full text-xs md:text-sm border rounded-lg px-2.5 py-1.5 bg-emerald-50 border-emerald-300 font-bold text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="1">Januari</option>
+            <option value="2">Februari</option>
+            <option value="3">Maret</option>
+            <option value="4">April</option>
+            <option value="5">Mei</option>
+            <option value="6">Juni</option>
+            <option value="7">Juli</option>
+            <option value="8">Agustus</option>
+            <option value="9" selected>September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+            <option value="12">Desember</option>
+          </select>
         </div>
-        <div class="flex gap-2">
-          <button onclick="resetDataLampiran()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border">
-            🔄 Isi Data Contoh Lampiran
-          </button>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Tahun Laporan</label>
+          <input type="number" id="inpTahun" value="2026" onchange="updatePeriode()" class="w-full text-xs md:text-sm border rounded-lg px-2.5 py-1.5 bg-emerald-50 border-emerald-300 font-bold text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="col-span-2 flex items-end">
+          <p class="text-xs text-gray-500 pb-1 italic">
+            * Judul KOP & baris saldo akhir otomatis menyesuaikan bulan & tahun yang Anda tentukan di sini.
+          </p>
         </div>
       </div>
 
-      <form id="formTransaksi" onsubmit="handleSimpan(event)" class="space-y-4">
+      <!-- Input Saldo Awal Petugas & Bank -->
+      <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+        <p class="text-xs font-bold text-slate-700 mb-2">Saldo Awal Bulan Sebelumnya (Kas Fisik & Bank):</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+          <div>
+            <label class="block text-[11px] text-gray-600">Awal P. Wito (Rp)</label>
+            <input type="number" id="inpAwalWito" value="0" min="0" onchange="updateSaldoAwal()" class="w-full text-xs border rounded p-1.5 font-semibold">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-600">Awal P. Zaki (Rp)</label>
+            <input type="number" id="inpAwalZaki" value="0" min="0" onchange="updateSaldoAwal()" class="w-full text-xs border rounded p-1.5 font-semibold">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-600">Awal Umam (Rp)</label>
+            <input type="number" id="inpAwalUmam" value="0" min="0" onchange="updateSaldoAwal()" class="w-full text-xs border rounded p-1.5 font-semibold">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-600">Buku BPD (Rp)</label>
+            <input type="number" id="inpBukuBPD" value="0" min="0" onchange="updateSaldoAwal()" class="w-full text-xs border rounded p-1.5 font-semibold">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-600">Buku BRI (Rp)</label>
+            <input type="number" id="inpBukuBRI" value="0" min="0" onchange="updateSaldoAwal()" class="w-full text-xs border rounded p-1.5 font-semibold">
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-600">Buku BMI (Rp)</label>
+            <input type="number" id="inpBukuBMI" value="0" min="0" onchange="updateSaldoAwal()" class="w-full text-xs border rounded p-1.5 font-semibold">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. MENU INPUT TRANSAKSI (NO-PRINT)        -->
+    <!-- ========================================== -->
+    <div class="no-print bg-white rounded-xl shadow p-4 md:p-5 border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-2 mb-3">
+        <h2 id="formTitle" class="text-sm md:text-base font-bold text-emerald-800 uppercase tracking-wide">
+          📝 2. Menu Input Transaksi Kas
+        </h2>
+        <button onclick="kosongkanSemuaData()" class="text-xs text-red-600 hover:underline">
+          Hapus Semua Transaksi
+        </button>
+      </div>
+
+      <form id="formTransaksi" onsubmit="simpanTransaksi(event)" class="space-y-3">
         <input type="hidden" id="editId" value="-1">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Hari</label>
-            <input type="text" id="inpHari" placeholder="Contoh: Jum'at / Ahad" class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <input type="text" id="inpHari" placeholder="Rabu / Jum'at / Ahad" class="w-full text-xs md:text-sm border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal</label>
-            <input type="text" id="inpTgl" required placeholder="Contoh: 04/09/'26" class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <input type="text" id="inpTgl" required placeholder="Contoh: 04/09/'26" class="w-full text-xs md:text-sm border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Petugas / Pemegang Kas</label>
-            <select id="inpPic" class="w-full text-sm border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Pemegang Kas (PIC)</label>
+            <select id="inpPic" class="w-full text-xs md:text-sm border rounded-lg px-3 py-1.5 bg-white font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
               <option value="P.WITO">P. Wito</option>
               <option value="P.ZAKI">P. Zaki</option>
               <option value="UMAM">Umam (Bendahara)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Transaksi</label>
-            <select id="inpJenis" onchange="toggleJenisNominal()" class="w-full text-sm border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium">
-              <option value="MASUK">Uang Kas Masuk (+)</option>
-              <option value="KELUAR">Uang Kas Keluar (-)</option>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Kas</label>
+            <select id="inpJenis" class="w-full text-xs md:text-sm border rounded-lg px-3 py-1.5 bg-white font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="MASUK">Uang Masuk (+)</option>
+              <option value="KELUAR">Uang Keluar (-)</option>
             </select>
           </div>
         </div>
@@ -72,68 +143,70 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan Transaksi</label>
-            <input type="text" id="inpKet" required placeholder="Contoh: Infaq jariyah jamaah jum'at / Transport ustadz" class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <input type="text" id="inpKet" required placeholder="Contoh: Infaq jariyah jumat / Transport ustadz" class="w-full text-xs md:text-sm border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Nominal (Rp)</label>
-            <input type="number" id="inpNominal" min="0" required placeholder="0" class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-gray-800">
+            <input type="number" id="inpNominal" min="0" required placeholder="0" class="w-full text-xs md:text-sm border rounded-lg px-3 py-1.5 font-bold text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
         </div>
 
         <div class="flex justify-end gap-2 pt-2 border-t">
-          <button type="button" id="btnBatal" onclick="batalEdit()" class="hidden px-4 py-2 text-xs font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg">
+          <button type="button" id="btnBatal" onclick="batalEdit()" class="hidden px-4 py-1.5 text-xs font-semibold bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">
             Batal
           </button>
-          <button type="submit" id="btnSubmit" class="px-5 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm">
-            💾 Simpan Transaksi
+          <button type="submit" id="btnSubmit" class="px-5 py-1.5 text-xs md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow">
+            Simpan Transaksi
           </button>
         </div>
       </form>
     </div>
 
     <!-- ========================================== -->
-    <!-- 2. PILIHAN TAMPILAN LAPORAN & CETAK        -->
+    <!-- 3. BAR NAVIGASI CETAK & MODEL LAPORAN      -->
     <!-- ========================================== -->
-    <div class="no-print bg-white rounded-xl shadow p-4 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+    <div class="no-print bg-white rounded-xl shadow p-3 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <span class="text-sm font-bold text-gray-700">Tampilan Laporan:</span>
-        <button onclick="setTampilan('MODEL1')" id="btnTabModel1" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white">
-          Model 1: Per Petugas (P. Wito, Zaki, Umam)
+        <span class="text-xs font-bold text-gray-700">Pilih Tampilan:</span>
+        <button onclick="gantiModel('MODEL1')" id="btnModel1" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white">
+          Tampilan 1: Per Petugas (P.Wito, Zaki, Umam)
         </button>
-        <button onclick="setTampilan('MODEL2')" id="btnTabModel2" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
-          Model 2: Kas Gabungan (Urut Tanggal)
+        <button onclick="gantiModel('MODEL2')" id="btnModel2" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+          Tampilan 2: Kas Gabungan Urut
         </button>
       </div>
 
-      <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded-lg flex items-center gap-2 shadow">
-        🖨️ Cetak / Print Laporan (PDF)
+      <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 shadow">
+        🖨️ Cetak / Simpan PDF
       </button>
     </div>
 
     <!-- ========================================== -->
-    <!-- 3. HASIL LAPORAN (AREA YANG AKAN DICETAK)  -->
+    <!-- 4. HASIL LAPORAN (AREA CETAK)              -->
     <!-- ========================================== -->
-    <div class="print-area bg-white rounded-xl shadow p-6 md:p-8 border border-slate-200">
+    <div class="print-card bg-white rounded-xl shadow p-5 md:p-8 border border-slate-200">
       
-      <!-- KOP / HEADER LAPORAN -->
+      <!-- KOP MASJID DINAMIS -->
       <div class="text-center mb-6">
-        <h1 class="text-xl md:text-2xl font-black uppercase text-gray-900 tracking-wide">UANG KAS MASJID AL-FALAH</h1>
-        <h2 class="text-md md:text-lg font-bold text-gray-800">Ranting Muhammadiyah Pasir Kidul</h2>
-        <h3 class="text-sm font-bold mt-1 text-gray-700 uppercase">BULAN : SEPTEMBER 2026</h3>
+        <h1 class="text-xl md:text-2xl font-black uppercase text-gray-900 tracking-wider">UANG KAS MASJID AL-FALAH</h1>
+        <h2 class="text-sm md:text-base font-bold text-gray-800">Ranting Muhammadiyah Pasir Kidul</h2>
+        <h3 id="kopPeriode" class="text-xs md:text-sm font-extrabold mt-1 text-gray-800 uppercase tracking-wide">
+          BULAN : SEPTEMBER 2026
+        </h3>
       </div>
 
-      <!-- KONTEN LAPORAN DINAMIS -->
-      <div id="kontenLaporan"></div>
+      <!-- KONTEN TABEL LAPORAN -->
+      <div id="wadahLaporan"></div>
 
-      <!-- TANDA TANGAN (HANYA MUNCUL DI PRINT) -->
-      <div class="hidden print:grid grid-cols-2 text-center mt-12 text-sm">
+      <!-- TANDA TANGAN DI BAGIAN BAWAH CETAK -->
+      <div class="hidden print:grid grid-cols-2 text-center mt-12 text-xs md:text-sm page-break">
         <div>
           <p>Mengetahui,</p>
-          <p class="font-bold mt-20">Ketua Takmir Masjid Al-Falah</p>
+          <p class="font-bold mt-16">Ketua Takmir Masjid Al-Falah</p>
         </div>
         <div>
-          <p>Pasir Kidul, 30 September 2026</p>
-          <p class="font-bold mt-20">Bendahara</p>
+          <p id="labelTitikTtd">Pasir Kidul, Akhir Bulan</p>
+          <p class="font-bold mt-16">Bendahara</p>
         </div>
       </div>
 
@@ -142,62 +215,33 @@
   </div>
 
   <script>
-    // Saldo awal bulan sesuai catatan lampiran
-    const SALDO_AWAL = {
-      "P.WITO": 714000,
-      "P.ZAKI": 1981500,
-      "UMAM": 7070000
+    const NAMA_BULAN = [
+      "", "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    // Data Pengaturan Tersimpan (Awalnya 0 Tanpa Data Bawaan)
+    let appConfig = JSON.parse(localStorage.getItem('kas_alfalah_config')) || {
+      bulan: 9,
+      tahun: 2026,
+      awalWito: 0,
+      awalZaki: 0,
+      awalUmam: 0,
+      bpd: 0,
+      bri: 0,
+      bmi: 0
     };
-    const SALDO_BANK_DETAIL = [
-      { nama: "Buku BPD", saldo: 347866 },
-      { nama: "Buku BRI", saldo: 428000 },
-      { nama: "Buku BMI", saldo: 3065000 },
-    ];
-    const TOTAL_BANK = 3840866;
 
-    // Data awal persis dari lampiran foto
-    const dataAwal = [
-      // Kas P. Wito
-      { id: 1, hari: "Rabu", tgl: "02/09/'26", ket: "Infaq jariyah parkir (P.Darsono)", pic: "P.WITO", masuk: 100000, keluar: 0 },
-      { id: 2, hari: "", tgl: "", ket: "Transport ustadz Takhsin", pic: "P.WITO", masuk: 0, keluar: 400000 },
-      { id: 3, hari: "Ahad", tgl: "06/09/'26", ket: "Infaq jariyah jamaah ahad pagi", pic: "P.WITO", masuk: 235000, keluar: 0 },
-      { id: 4, hari: "", tgl: "", ket: "Transport ustadz", pic: "P.WITO", masuk: 0, keluar: 250000 },
-      { id: 5, hari: "Selasa", tgl: "08/09/'26", ket: "Infaq jariyah Parkir (P.Dahlan)", pic: "P.WITO", masuk: 50000, keluar: 0 },
-      { id: 6, hari: "Jumat", tgl: "11/09/'26", ket: "Snack Jum'at bersih", pic: "P.WITO", masuk: 0, keluar: 125000 },
-      { id: 7, hari: "Sabtu", tgl: "12/09/'26", ket: "Tamb. masak utk ahad pagi rt 02", pic: "P.WITO", masuk: 0, keluar: 100000 },
-      { id: 8, hari: "Ahad", tgl: "13/09/'26", ket: "Infaq jariyah jamaah ahad pagi", pic: "P.WITO", masuk: 250000, keluar: 0 },
-      { id: 9, hari: "", tgl: "", ket: "Transport ustadz (Sdn)", pic: "P.WITO", masuk: 0, keluar: 250000 },
-      { id: 10, hari: "Rabu", tgl: "16/09/'26", ket: "Transport Ustadz Takhsin", pic: "P.WITO", masuk: 0, keluar: 200000 },
-      { id: 11, hari: "Jum'at", tgl: "18/09/'26", ket: "Infaq jariyah jamaah jum'at", pic: "P.WITO", masuk: 450000, keluar: 0 },
-      { id: 12, hari: "", tgl: "", ket: "Snack Jum'at bersih", pic: "P.WITO", masuk: 0, keluar: 125000 },
-      { id: 13, hari: "Ahad", tgl: "20/09/'26", ket: "Infaq jariyah jamaah ahad pagi", pic: "P.WITO", masuk: 260000, keluar: 0 },
-      { id: 14, hari: "", tgl: "", ket: "Transport Ustadz (Amr)", pic: "P.WITO", masuk: 0, keluar: 200000 },
-      { id: 15, hari: "Jum'at", tgl: "25/09/'26", ket: "Snack Jum'at bersih", pic: "P.WITO", masuk: 0, keluar: 125000 },
-      { id: 16, hari: "Ahad", tgl: "27/09/'26", ket: "Infaq jariyah jamaah ahad pagi", pic: "P.WITO", masuk: 175000, keluar: 0 },
-      { id: 17, hari: "", tgl: "", ket: "Transport ustadz (Arf)", pic: "P.WITO", masuk: 0, keluar: 200000 },
-      { id: 18, hari: "Rabu", tgl: "30/09/'26", ket: "Transport ustadz Takhsin", pic: "P.WITO", masuk: 0, keluar: 200000 },
+    // Daftar transaksi (Awalnya array kosong [])
+    let transaksiList = JSON.parse(localStorage.getItem('kas_alfalah_trx')) || [];
+    let modelAktif = 'MODEL1';
 
-      // Kas P. Zaki
-      { id: 19, hari: "Jum'at", tgl: "04/09/'26", ket: "Infaq jariyah jamaah jum'at", pic: "P.ZAKI", masuk: 550000, keluar: 0 },
-      { id: 20, hari: "", tgl: "Sept'26", ket: "Beli Kopi,susu + Gula", pic: "P.ZAKI", masuk: 0, keluar: 250000 },
-      { id: 21, hari: "", tgl: "", ket: "Alat kebersihan", pic: "P.ZAKI", masuk: 0, keluar: 200000 },
+    function simpanConfigKeStorage() {
+      localStorage.setItem('kas_alfalah_config', JSON.stringify(appConfig));
+    }
 
-      // Kas Umam (Bendahara)
-      { id: 22, hari: "Rabu", tgl: "07/09/'26", ket: "Biaya PDAM", pic: "UMAM", masuk: 0, keluar: 205000 },
-      { id: 23, hari: "Kamis", tgl: "09/09/'26", ket: "Biaya Listrik (440,47 - 642,53)", pic: "UMAM", masuk: 0, keluar: 203000 },
-      { id: 24, hari: "Jum'at", tgl: "11/09/'26", ket: "Infaq jariyah jamaah jum'at", pic: "UMAM", masuk: 440000, keluar: 0 },
-      { id: 25, hari: "Kamis", tgl: "24/09/'26", ket: "Infaq jariyah SMK MUTU", pic: "UMAM", masuk: 1250000, keluar: 0 },
-      { id: 26, hari: "Jum'at", tgl: "25/09/'26", ket: "Infaq jariyah jamaah jum'at", pic: "UMAM", masuk: 450000, keluar: 0 },
-      { id: 27, hari: "Ahad", tgl: "27/09/'26", ket: "Sosial jamaah masjid (bu.Khsn)", pic: "UMAM", masuk: 0, keluar: 250000 },
-      { id: 28, hari: "Senin", tgl: "28/09/'26", ket: "Transport Ustadz Tarjih 2X", pic: "UMAM", masuk: 0, keluar: 400000 },
-      { id: 29, hari: "", tgl: "", ket: "Kebersihan lingkungan masjid (Crm)", pic: "UMAM", masuk: 0, keluar: 250000 }
-    ];
-
-    let transaksiList = JSON.parse(localStorage.getItem('kas_alfalah_transaksi')) || dataAwal;
-    let tampilanAktif = 'MODEL1'; // 'MODEL1' (per petugas) atau 'MODEL2' (gabungan)
-
-    function simpanKeStorage() {
-      localStorage.setItem('kas_alfalah_transaksi', JSON.stringify(transaksiList));
+    function simpanTrxKeStorage() {
+      localStorage.setItem('kas_alfalah_trx', JSON.stringify(transaksiList));
     }
 
     function formatRp(val) {
@@ -205,47 +249,95 @@
       return new Intl.NumberFormat('id-ID').format(val);
     }
 
-    function setTampilan(model) {
-      tampilanAktif = model;
-      const b1 = document.getElementById('btnTabModel1');
-      const b2 = document.getElementById('btnTabModel2');
-      if (model === 'MODEL1') {
+    function getBulanSebelumnya(bln, thn) {
+      let b = parseInt(bln);
+      let t = parseInt(thn);
+      if (b === 1) {
+        return { bulan: NAMA_BULAN[12], tahun: t - 1 };
+      } else {
+        return { bulan: NAMA_BULAN[b - 1], tahun: t };
+      }
+    }
+
+    // Inisialisasi Tampilan Form Pengaturan
+    function loadConfigInputs() {
+      document.getElementById('selBulan').value = appConfig.bulan;
+      document.getElementById('inpTahun').value = appConfig.tahun;
+      document.getElementById('inpAwalWito').value = appConfig.awalWito || 0;
+      document.getElementById('inpAwalZaki').value = appConfig.awalZaki || 0;
+      document.getElementById('inpAwalUmam').value = appConfig.awalUmam || 0;
+      document.getElementById('inpBukuBPD').value = appConfig.bpd || 0;
+      document.getElementById('inpBukuBRI').value = appConfig.bri || 0;
+      document.getElementById('inpBukuBMI').value = appConfig.bmi || 0;
+    }
+
+    function updatePeriode() {
+      appConfig.bulan = parseInt(document.getElementById('selBulan').value);
+      appConfig.tahun = parseInt(document.getElementById('inpTahun').value);
+      simpanConfigKeStorage();
+      renderSemua();
+    }
+
+    function updateSaldoAwal() {
+      appConfig.awalWito = Number(document.getElementById('inpAwalWito').value) || 0;
+      appConfig.awalZaki = Number(document.getElementById('inpAwalZaki').value) || 0;
+      appConfig.awalUmam = Number(document.getElementById('inpAwalUmam').value) || 0;
+      appConfig.bpd = Number(document.getElementById('inpBukuBPD').value) || 0;
+      appConfig.bri = Number(document.getElementById('inpBukuBRI').value) || 0;
+      appConfig.bmi = Number(document.getElementById('inpBukuBMI').value) || 0;
+      simpanConfigKeStorage();
+      renderSemua();
+    }
+
+    function gantiModel(m) {
+      modelAktif = m;
+      const b1 = document.getElementById('btnModel1');
+      const b2 = document.getElementById('btnModel2');
+      if (m === 'MODEL1') {
         b1.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white";
         b2.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300";
       } else {
         b2.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white";
         b1.className = "px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300";
       }
-      renderLaporan();
+      renderSemua();
     }
 
     // ==========================================
-    // RENDER LAPORAN
+    // RENDER UTAMA
     // ==========================================
-    function renderLaporan() {
-      const container = document.getElementById('kontenLaporan');
+    function renderSemua() {
+      const namaBulanIni = NAMA_BULAN[appConfig.bulan];
+      const tahunIni = appConfig.tahun;
+      const blnLalu = getBulanSebelumnya(appConfig.bulan, appConfig.tahun);
+
+      // Update KOP
+      document.getElementById('kopPeriode').textContent = `BULAN : ${namaBulanIni.toUpperCase()} ${tahunIni}`;
+      document.getElementById('labelTitikTtd').textContent = `Pasir Kidul, Akhir ${namaBulanIni} ${tahunIni}`;
+
+      const container = document.getElementById('wadahLaporan');
       container.innerHTML = '';
 
-      if (tampilanAktif === 'MODEL1') {
-        renderModelPerPetugas(container);
+      if (modelAktif === 'MODEL1') {
+        renderTampilanModel1(container, namaBulanIni, tahunIni, blnLalu);
       } else {
-        renderModelGabungan(container);
+        renderTampilanModel2(container, namaBulanIni, tahunIni, blnLalu);
       }
     }
 
-    // MODEL 1: TABEL TERPISAH PER PETUGAS (SESUAI LAMPIRAN 1)
-    function renderModelPerPetugas(container) {
-      const sections = [
-        { pic: "P.WITO", labelPic: "P.WITO", saldoAwal: SALDO_AWAL["P.WITO"] },
-        { pic: "P.ZAKI", labelPic: "P.ZAKI", saldoAwal: SALDO_AWAL["P.ZAKI"] },
-        { pic: "UMAM", labelPic: "UMAM", saldoAwal: SALDO_AWAL["UMAM"] }
+    // MODEL 1: PER PETUGAS (SESUAI LAMPIRAN GAMBAR 1)
+    function renderTampilanModel1(container, bulanIni, tahunIni, blnLalu) {
+      const seksiPetugas = [
+        { pic: "P.WITO", label: "P.WITO", awal: appConfig.awalWito },
+        { pic: "P.ZAKI", label: "P.ZAKI", awal: appConfig.awalZaki },
+        { pic: "UMAM", label: "UMAM", awal: appConfig.awalUmam }
       ];
 
       let saldoAkhirPetugas = {};
 
-      sections.forEach(sec => {
+      seksiPetugas.forEach(sec => {
         const itemTrx = transaksiList.filter(t => t.pic === sec.pic);
-        let sisa = sec.saldoAwal;
+        let sisa = sec.awal;
         let totMsk = 0;
         let totKlr = 0;
 
@@ -253,7 +345,7 @@
           <tr class="bg-gray-50/50">
             <td class="p-1.5 border border-gray-400"></td>
             <td class="p-1.5 border border-gray-400"></td>
-            <td class="p-1.5 border border-gray-400 font-bold text-center">Uang Akhir Agustus '26</td>
+            <td class="p-1.5 border border-gray-400 font-bold text-center">Uang Akhir ${blnLalu.bulan} '${String(blnLalu.tahun).slice(-2)}</td>
             <td class="p-1.5 border border-gray-400 text-right"></td>
             <td class="p-1.5 border border-gray-400 text-right"></td>
             <td class="p-1.5 border border-gray-400 text-right font-bold">${formatRp(sisa)}</td>
@@ -261,35 +353,44 @@
           </tr>
         `;
 
-        itemTrx.forEach(t => {
-          sisa = sisa + t.masuk - t.keluar;
-          totMsk += t.masuk;
-          totKlr += t.keluar;
-
+        if (itemTrx.length === 0) {
           rowsHtml += `
-            <tr class="hover:bg-amber-50/40">
-              <td class="p-1.5 border border-gray-400 text-center">${t.hari || ''}</td>
-              <td class="p-1.5 border border-gray-400 text-center">${t.tgl || ''}</td>
-              <td class="p-1.5 border border-gray-400">${t.ket}</td>
-              <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.masuk)}</td>
-              <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.keluar)}</td>
-              <td class="p-1.5 border border-gray-400 text-right font-semibold">${formatRp(sisa)}</td>
-              <td class="p-1.5 border border-gray-400 text-center no-print whitespace-nowrap">
-                <button onclick="editData(${t.id})" class="text-blue-600 hover:underline text-xs mr-2 font-bold">Edit</button>
-                <button onclick="hapusData(${t.id})" class="text-red-600 hover:underline text-xs font-bold">Hapus</button>
-              </td>
+            <tr class="text-gray-400 italic">
+              <td colspan="6" class="p-2 border border-gray-400 text-center">Belum ada transaksi untuk ${sec.label} di bulan ini.</td>
+              <td class="p-2 border border-gray-400 no-print"></td>
             </tr>
           `;
-        });
+        } else {
+          itemTrx.forEach(t => {
+            sisa = sisa + t.masuk - t.keluar;
+            totMsk += t.masuk;
+            totKlr += t.keluar;
+
+            rowsHtml += `
+              <tr class="hover:bg-amber-50/40">
+                <td class="p-1.5 border border-gray-400 text-center">${t.hari || ''}</td>
+                <td class="p-1.5 border border-gray-400 text-center">${t.tgl || ''}</td>
+                <td class="p-1.5 border border-gray-400">${t.ket}</td>
+                <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.masuk)}</td>
+                <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.keluar)}</td>
+                <td class="p-1.5 border border-gray-400 text-right font-semibold">${formatRp(sisa)}</td>
+                <td class="p-1.5 border border-gray-400 text-center no-print whitespace-nowrap">
+                  <button onclick="mulaiEdit(${t.id})" class="text-blue-600 hover:underline text-xs mr-2 font-bold">Edit</button>
+                  <button onclick="hapusTrx(${t.id})" class="text-red-600 hover:underline text-xs font-bold">Hapus</button>
+                </td>
+              </tr>
+            `;
+          });
+        }
 
         saldoAkhirPetugas[sec.pic] = sisa;
 
         const tableSec = document.createElement('div');
-        tableSec.className = "mb-6";
+        tableSec.className = "mb-6 page-break";
         tableSec.innerHTML = `
           <div class="flex justify-between items-center bg-gray-100 px-3 py-1 border border-b-0 border-gray-400 text-xs font-bold">
-            <span>BULAN : September 2026</span>
-            <span class="bg-yellow-header px-4 py-0.5 border border-gray-400 uppercase">${sec.labelPic}</span>
+            <span>BULAN : ${bulanIni} ${tahunIni}</span>
+            <span class="bg-yellow-header px-4 py-0.5 border border-gray-400 uppercase">${sec.label}</span>
           </div>
           <table class="w-full text-xs text-left border-collapse border border-gray-400">
             <thead class="bg-yellow-header font-bold text-center border-b border-gray-400">
@@ -306,7 +407,7 @@
             <tbody>${rowsHtml}</tbody>
             <tfoot class="bg-white font-bold border-t-2 border-gray-400">
               <tr>
-                <td colspan="3" class="p-1.5 border border-gray-400 text-center uppercase">Jumlah Akhir September 2026</td>
+                <td colspan="3" class="p-1.5 border border-gray-400 text-center uppercase">Jumlah Akhir ${bulanIni} ${tahunIni}</td>
                 <td class="p-1.5 border border-gray-400 text-right">${formatRp(totMsk)}</td>
                 <td class="p-1.5 border border-gray-400 text-right">${formatRp(totKlr)}</td>
                 <td class="p-1.5 border border-gray-400 text-right font-black">${formatRp(sisa)}</td>
@@ -318,10 +419,11 @@
         container.appendChild(tableSec);
       });
 
-      // Kotak Rekap Bank & Saya Sesuai Lampiran 1
-      const rekapBankEl = document.createElement('div');
-      rekapBankEl.className = "w-full sm:w-80 mt-6 text-xs";
-      rekapBankEl.innerHTML = `
+      // Tabel Rekapitulasi Kas Bank & Umam di Bawah (Sesuai Lampiran 1)
+      const totBank = (appConfig.bpd || 0) + (appConfig.bri || 0) + (appConfig.bmi || 0);
+      const rekapBox = document.createElement('div');
+      rekapBox.className = "w-full sm:w-80 mt-4 text-xs page-break";
+      rekapBox.innerHTML = `
         <table class="w-full border-collapse border border-gray-400">
           <thead>
             <tr>
@@ -331,48 +433,48 @@
           <tbody>
             <tr>
               <td class="p-1.5 border border-gray-400">Buku BPD</td>
-              <td class="p-1.5 border border-gray-400 text-right font-medium">347.866</td>
+              <td class="p-1.5 border border-gray-400 text-right font-medium">${formatRp(appConfig.bpd)}</td>
             </tr>
             <tr>
               <td class="p-1.5 border border-gray-400">Buku BRI</td>
-              <td class="p-1.5 border border-gray-400 text-right font-medium">428.000</td>
+              <td class="p-1.5 border border-gray-400 text-right font-medium">${formatRp(appConfig.bri)}</td>
             </tr>
             <tr>
               <td class="p-1.5 border border-gray-400">Buku BMI</td>
-              <td class="p-1.5 border border-gray-400 text-right font-medium">3.065.000</td>
+              <td class="p-1.5 border border-gray-400 text-right font-medium">${formatRp(appConfig.bmi)}</td>
             </tr>
             <tr class="bg-green-highlight font-bold">
               <td class="p-1.5 border border-gray-400">Di BANK</td>
-              <td class="p-1.5 border border-gray-400 text-right">${formatRp(TOTAL_BANK)}</td>
+              <td class="p-1.5 border border-gray-400 text-right">${formatRp(totBank)}</td>
             </tr>
             <tr class="font-bold">
               <td class="p-1.5 border border-gray-400">Di Saya (Umam)</td>
-              <td class="p-1.5 border border-gray-400 text-right">${formatRp(saldoAkhirPetugas["UMAM"])}</td>
+              <td class="p-1.5 border border-gray-400 text-right">${formatRp(saldoAkhirPetugas["UMAM"] || 0)}</td>
             </tr>
           </tbody>
         </table>
       `;
-      container.appendChild(rekapBankEl);
+      container.appendChild(rekapBox);
     }
 
-    // MODEL 2: TABEL GABUNGAN BESAR (SESUAI LAMPIRAN 2)
-    function renderModelGabungan(container) {
-      const totalSaldoAwal = SALDO_AWAL["P.WITO"] + SALDO_AWAL["P.ZAKI"] + SALDO_AWAL["UMAM"];
-      let sisa = totalSaldoAwal;
+    // MODEL 2: GABUNGAN SATU TABEL BESAR (SESUAI LAMPIRAN GAMBAR 2)
+    function renderTampilanModel2(container, bulanIni, tahunIni, blnLalu) {
+      const totAwalFisik = appConfig.awalWito + appConfig.awalZaki + appConfig.awalUmam;
+      let sisa = totAwalFisik;
       let totMsk = 0;
       let totKlr = 0;
 
       let saldoPerPic = {
-        "P.WITO": SALDO_AWAL["P.WITO"],
-        "P.ZAKI": SALDO_AWAL["P.ZAKI"],
-        "UMAM": SALDO_AWAL["UMAM"]
+        "P.WITO": appConfig.awalWito,
+        "P.ZAKI": appConfig.awalZaki,
+        "UMAM": appConfig.awalUmam
       };
 
       let rowsHtml = `
         <tr class="bg-gray-50/50">
           <td class="p-1.5 border border-gray-400"></td>
           <td class="p-1.5 border border-gray-400"></td>
-          <td class="p-1.5 border border-gray-400 font-bold">Sisa Kas Akhir Agustus '26</td>
+          <td class="p-1.5 border border-gray-400 font-bold">Sisa Kas Akhir ${blnLalu.bulan} '${String(blnLalu.tahun).slice(-2)}</td>
           <td class="p-1.5 border border-gray-400 text-right"></td>
           <td class="p-1.5 border border-gray-400 text-right"></td>
           <td class="p-1.5 border border-gray-400 text-right font-bold">${formatRp(sisa)}</td>
@@ -380,30 +482,41 @@
         </tr>
       `;
 
-      transaksiList.forEach(t => {
-        sisa = sisa + t.masuk - t.keluar;
-        totMsk += t.masuk;
-        totKlr += t.keluar;
-        saldoPerPic[t.pic] += (t.masuk - t.keluar);
-
+      if (transaksiList.length === 0) {
         rowsHtml += `
-          <tr class="hover:bg-amber-50/40">
-            <td class="p-1.5 border border-gray-400 text-center">${t.hari || ''}</td>
-            <td class="p-1.5 border border-gray-400 text-center">${t.tgl || ''}</td>
-            <td class="p-1.5 border border-gray-400">${t.ket}</td>
-            <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.masuk)}</td>
-            <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.keluar)}</td>
-            <td class="p-1.5 border border-gray-400 text-right font-semibold">${formatRp(sisa)}</td>
-            <td class="p-1.5 border border-gray-400 text-center no-print whitespace-nowrap">
-              <button onclick="editData(${t.id})" class="text-blue-600 hover:underline text-xs mr-2 font-bold">Edit</button>
-              <button onclick="hapusData(${t.id})" class="text-red-600 hover:underline text-xs font-bold">Hapus</button>
-            </td>
+          <tr class="text-gray-400 italic">
+            <td colspan="6" class="p-3 border border-gray-400 text-center">Belum ada transaksi di bulan ini. Silakan input pada menu di atas.</td>
+            <td class="p-3 border border-gray-400 no-print"></td>
           </tr>
         `;
-      });
+      } else {
+        transaksiList.forEach(t => {
+          sisa = sisa + t.masuk - t.keluar;
+          totMsk += t.masuk;
+          totKlr += t.keluar;
+          if (saldoPerPic[t.pic] !== undefined) {
+            saldoPerPic[t.pic] += (t.masuk - t.keluar);
+          }
+
+          rowsHtml += `
+            <tr class="hover:bg-amber-50/40">
+              <td class="p-1.5 border border-gray-400 text-center">${t.hari || ''}</td>
+              <td class="p-1.5 border border-gray-400 text-center">${t.tgl || ''}</td>
+              <td class="p-1.5 border border-gray-400">${t.ket}</td>
+              <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.masuk)}</td>
+              <td class="p-1.5 border border-gray-400 text-right">${formatRp(t.keluar)}</td>
+              <td class="p-1.5 border border-gray-400 text-right font-semibold">${formatRp(sisa)}</td>
+              <td class="p-1.5 border border-gray-400 text-center no-print whitespace-nowrap">
+                <button onclick="mulaiEdit(${t.id})" class="text-blue-600 hover:underline text-xs mr-2 font-bold">Edit</button>
+                <button onclick="hapusTrx(${t.id})" class="text-red-600 hover:underline text-xs font-bold">Hapus</button>
+              </td>
+            </tr>
+          `;
+        });
+      }
 
       const tableEl = document.createElement('div');
-      tableEl.className = "mb-6";
+      tableEl.className = "mb-6 page-break";
       tableEl.innerHTML = `
         <table class="w-full text-xs text-left border-collapse border border-gray-400">
           <thead class="bg-yellow-header font-bold text-center border-b border-gray-400">
@@ -420,7 +533,7 @@
           <tbody>${rowsHtml}</tbody>
           <tfoot class="bg-yellow-header font-black border-t-2 border-gray-400">
             <tr>
-              <td colspan="3" class="p-2 border border-gray-400 text-center uppercase">JUMLAH akhir September 2026</td>
+              <td colspan="3" class="p-2 border border-gray-400 text-center uppercase">JUMLAH akhir ${bulanIni} ${tahunIni}</td>
               <td class="p-2 border border-gray-400 text-right">${formatRp(totMsk)}</td>
               <td class="p-2 border border-gray-400 text-right">${formatRp(totKlr)}</td>
               <td class="p-2 border border-gray-400 text-right text-emerald-950">${formatRp(sisa)}</td>
@@ -431,19 +544,19 @@
       `;
       container.appendChild(tableEl);
 
-      // Rekapitulasi Bawah Sesuai Lampiran 2
+      // Rekapitulasi Kas Fisik & Bank di Bawah Sesuai Lampiran 2
+      const totBank = (appConfig.bpd || 0) + (appConfig.bri || 0) + (appConfig.bmi || 0);
       const totalFisik = saldoPerPic["P.WITO"] + saldoPerPic["P.ZAKI"] + saldoPerPic["UMAM"];
-      const grandTotal = totalFisik; // Total uang kas fisik yang dipegang
 
-      const rekapGabungEl = document.createElement('div');
-      rekapGabungEl.className = "w-full sm:w-96 mt-6 text-xs";
-      rekapGabungEl.innerHTML = `
+      const rekapGabungBox = document.createElement('div');
+      rekapGabungBox.className = "w-full sm:w-96 mt-6 text-xs page-break";
+      rekapGabungBox.innerHTML = `
         <table class="w-full border-collapse border border-gray-400">
           <tbody>
             <tr class="bg-amber-100/60 font-semibold">
               <td class="p-1.5 border border-gray-400">di Bank</td>
               <td class="p-1.5 border border-gray-400 w-10 text-center">Rp</td>
-              <td class="p-1.5 border border-gray-400 text-right">${formatRp(TOTAL_BANK)}</td>
+              <td class="p-1.5 border border-gray-400 text-right">${formatRp(totBank)}</td>
             </tr>
             <tr><td colspan="3" class="p-1 bg-white border-none"></td></tr>
             <tr>
@@ -462,30 +575,26 @@
               <td class="p-1.5 border border-gray-400 text-right">${formatRp(saldoPerPic["UMAM"])}</td>
             </tr>
             <tr class="bg-yellow-header font-black">
-              <td class="p-1.5 border border-gray-400">Jumlah total Kas</td>
+              <td class="p-1.5 border border-gray-400">Jumlah total</td>
               <td class="p-1.5 border border-gray-400 text-center">Rp</td>
               <td class="p-1.5 border border-gray-400 text-right">${formatRp(totalFisik)}</td>
             </tr>
           </tbody>
         </table>
       `;
-      container.appendChild(rekapGabungEl);
+      container.appendChild(rekapGabungBox);
     }
 
     // ==========================================
-    // FUNGSI CRUD & INPUT
+    // LOGIKA FORM INPUT, EDIT & HAPUS
     // ==========================================
-    function toggleJenisNominal() {
-      // Pembantu saat input
-    }
-
-    function handleSimpan(e) {
+    function simpanTransaksi(e) {
       e.preventDefault();
       const idEdit = parseInt(document.getElementById('editId').value);
       const jenis = document.getElementById('inpJenis').value;
       const nominal = Number(document.getElementById('inpNominal').value) || 0;
 
-      const objBaru = {
+      const dataBaru = {
         id: idEdit === -1 ? Date.now() : idEdit,
         hari: document.getElementById('inpHari').value.trim(),
         tgl: document.getElementById('inpTgl').value.trim(),
@@ -496,18 +605,18 @@
       };
 
       if (idEdit === -1) {
-        transaksiList.push(objBaru);
+        transaksiList.push(dataBaru);
       } else {
         const idx = transaksiList.findIndex(t => t.id === idEdit);
-        if (idx !== -1) transaksiList[idx] = objBaru;
+        if (idx !== -1) transaksiList[idx] = dataBaru;
       }
 
-      simpanKeStorage();
+      simpanTrxKeStorage();
       batalEdit();
-      renderLaporan();
+      renderSemua();
     }
 
-    function editData(id) {
+    function mulaiEdit(id) {
       const item = transaksiList.find(t => t.id === id);
       if (!item) return;
 
@@ -526,43 +635,45 @@
         document.getElementById('inpNominal').value = item.keluar;
       }
 
-      document.getElementById('btnSubmit').textContent = "💾 Perbarui Transaksi";
+      document.getElementById('btnSubmit').textContent = "Perbarui Transaksi";
       document.getElementById('btnBatal').classList.remove('hidden');
 
-      // Scroll ke form input
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 120, behavior: 'smooth' });
     }
 
     function batalEdit() {
       document.getElementById('editId').value = "-1";
-      document.getElementById('formTitle').textContent = "📥 Menu Input Transaksi Kas";
+      document.getElementById('formTitle').textContent = "📝 2. Menu Input Transaksi Kas";
       document.getElementById('formTransaksi').reset();
-      document.getElementById('btnSubmit').textContent = "💾 Simpan Transaksi";
+      document.getElementById('btnSubmit').textContent = "Simpan Transaksi";
       document.getElementById('btnBatal').classList.add('hidden');
     }
 
-    function hapusData(id) {
+    function hapusTrx(id) {
       const item = transaksiList.find(t => t.id === id);
       if (!item) return;
 
-      if (confirm(`Hapus transaksi "${item.ket}"?`)) {
+      if (confirm(`Yakin ingin menghapus transaksi: "${item.ket}"?`)) {
         transaksiList = transaksiList.filter(t => t.id !== id);
-        simpanKeStorage();
-        renderLaporan();
+        simpanTrxKeStorage();
+        renderSemua();
       }
     }
 
-    function resetDataLampiran() {
-      if (confirm("Muat ulang seluruh data sesuai contoh lampiran gambar? (Data perubahan saat ini akan diganti)")) {
-        transaksiList = JSON.parse(JSON.stringify(dataAwal));
-        simpanKeStorage();
+    function kosongkanSemuaData() {
+      if (confirm("Perhatian: Semua daftar transaksi yang ada saat ini akan dihapus dari memori. Lanjutkan?")) {
+        transaksiList = [];
+        simpanTrxKeStorage();
         batalEdit();
-        renderLaporan();
+        renderSemua();
       }
     }
 
-    // Inisialisasi awal
-    window.onload = renderLaporan;
+    // Inisialisasi Saat Halaman Pertama Kali Dibuka
+    window.onload = function() {
+      loadConfigInputs();
+      renderSemua();
+    };
   </script>
 </body>
 </html>
